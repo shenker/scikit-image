@@ -80,7 +80,7 @@ def _sortbyabs(array, axis=0):
     return array[tuple(index)]
 
 
-def compute_hessian_eigenvalues(image, sigma, sorting='none'):
+def compute_hessian_eigenvalues(image, sigma, sorting='none', mode='nearest', cval=0):
     """
     Compute Hessian eigenvalues of nD images.
 
@@ -112,7 +112,7 @@ def compute_hessian_eigenvalues(image, sigma, sorting='none'):
     image = img_as_float(image)
 
     # Make nD hessian
-    hessian_elements = hessian_matrix(image, sigma=sigma, order='rc')
+    hessian_elements = hessian_matrix(image, sigma=sigma, order='rc', mode=mode, cval=cval)
 
     # Correct for scale
     hessian_elements = [(sigma ** 2) * e for e in hessian_elements]
@@ -135,7 +135,7 @@ def compute_hessian_eigenvalues(image, sigma, sorting='none'):
 
 
 def meijering(image, sigmas=range(1, 10, 2), alpha=None,
-              black_ridges=True):
+              black_ridges=True, mode='nearest', cval=0):
     """
     Filter an image with the Meijering neuriteness filter.
 
@@ -197,7 +197,8 @@ def meijering(image, sigmas=range(1, 10, 2), alpha=None,
     for i, sigma in enumerate(sigmas):
 
         # Calculate (sorted) eigenvalues
-        eigenvalues = compute_hessian_eigenvalues(image, sigma, sorting='val')
+        eigenvalues = compute_hessian_eigenvalues(image, sigma, sorting='val',
+                                                  mode=mode, cval=cval)
 
         if ndim > 1:
 
@@ -225,7 +226,7 @@ def meijering(image, sigmas=range(1, 10, 2), alpha=None,
     return np.max(filtered_array, axis=0)
 
 
-def sato(image, sigmas=range(1, 10, 2), black_ridges=True):
+def sato(image, sigmas=range(1, 10, 2), black_ridges=True, mode='nearest', cval=0):
     """
     Filter an image with the Sato tubeness filter.
 
@@ -297,7 +298,7 @@ def sato(image, sigmas=range(1, 10, 2), black_ridges=True):
 
 def frangi(image, sigmas=range(1, 10, 2), scale_range=None, scale_step=None,
            beta1=None, beta2=None, alpha=0.5, beta=0.5, gamma=15,
-           black_ridges=True):
+           black_ridges=True, mode='nearest', cval=0):
     """
     Filter an image with the Frangi vesselness filter.
 
@@ -401,7 +402,9 @@ def frangi(image, sigmas=range(1, 10, 2), scale_range=None, scale_step=None,
 
         # Calculate (abs sorted) eigenvalues
         lambda1, *lambdas = compute_hessian_eigenvalues(image, sigma,
-                                                        sorting='abs')
+                                                        sorting='abs',
+                                                        mode=mode,
+                                                        cval=cval)
 
         # Compute sensitivity to deviation from a plate-like structure
         # see equations (11) and (15) in reference [1]_
@@ -433,7 +436,7 @@ def frangi(image, sigmas=range(1, 10, 2), scale_range=None, scale_step=None,
 
 def hessian(image, sigmas=range(1, 10, 2), scale_range=None, scale_step=None,
             beta1=None, beta2=None, alpha=0.5, beta=0.5, gamma=15,
-            black_ridges=True):
+            black_ridges=True, mode='nearest', cval=0):
     """Filter an image with the Hybrid Hessian filter.
 
     This filter can be used to detect continuous edges, e.g. vessels,
@@ -487,7 +490,7 @@ def hessian(image, sigmas=range(1, 10, 2), scale_range=None, scale_step=None,
     filtered = frangi(image, sigmas=sigmas, scale_range=scale_range,
                       scale_step=scale_step, beta1=beta1, beta2=beta2,
                       alpha=alpha, beta=beta, gamma=gamma,
-                      black_ridges=black_ridges)
+                      black_ridges=black_ridges, mode=mode, cval=cval)
 
     filtered[filtered <= 0] = 1
     return filtered
