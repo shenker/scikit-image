@@ -1,6 +1,7 @@
 import math
 import numpy as np
 from scipy import spatial
+import textwrap
 
 from .._shared.utils import get_bound_method_class, safe_as_int
 
@@ -304,8 +305,10 @@ class FundamentalMatrixTransform(GeometricTransform):
             coordinates.
 
         """
-        assert src.shape == dst.shape
-        assert src.shape[0] >= 8
+        if src.shape != dst.shape:
+            raise ValueError('src and dst shapes must be identical.')
+        if src.shape[0] < 8:
+            raise ValueError('src.shape[0] must be equal or larger than 8.')
 
         # Center and normalize image points for better numerical stability.
         try:
@@ -718,6 +721,26 @@ class ProjectiveTransform(GeometricTransform):
         else:
             raise TypeError("Cannot combine transformations of differing "
                             "types.")
+
+    def __nice__(self):
+        """common 'paramstr' used by __str__ and __repr__"""
+        npstring = np.array2string(self.params, separator=', ')
+        paramstr = 'matrix=\n' + textwrap.indent(npstring, '    ')
+        return paramstr
+
+    def __repr__(self):
+        """Add standard repr formatting around a __nice__ string"""
+        paramstr = self.__nice__()
+        classname = self.__class__.__name__
+        classstr = classname
+        return '<{}({}) at {}>'.format(classstr, paramstr, hex(id(self)))
+
+    def __str__(self):
+        """Add standard str formatting around a __nice__ string"""
+        paramstr = self.__nice__()
+        classname = self.__class__.__name__
+        classstr = classname
+        return '<{}({})>'.format(classstr, paramstr)
 
 
 class AffineTransform(ProjectiveTransform):
